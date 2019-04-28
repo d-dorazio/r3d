@@ -29,6 +29,7 @@ pub fn main() {
             ),
             Sphere::new(Vec3::new(-1.0, 0.0, -1.0), 0.5, Material::dielectric(1.5)),
         ],
+        vec![],
         Environment::Color(Vec3::new(0.2, 0.2, 0.8)),
     );
 
@@ -41,8 +42,8 @@ pub fn main() {
         &RenderConfig {
             width: 400,
             height: 200,
-            samples: 10,
-            max_bounces: 50,
+            samples: 1,
+            max_bounces: 5,
         },
     );
     img.save("debug.ppm").unwrap();

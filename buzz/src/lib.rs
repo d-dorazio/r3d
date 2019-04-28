@@ -29,11 +29,18 @@ pub trait Object: Shape + Sync {
     fn normal_at(&self, p: Vec3) -> Vec3;
 }
 
+#[derive(Debug, PartialEq, Clone)]
+pub struct Light {
+    pub position: Vec3,
+    pub intensity: f64,
+}
+
 /// A `Scene` is a collection of objects that can be rendered.
 #[derive(Debug)]
 pub struct Scene<O: Object> {
     objects: Bvh<O>,
     environment: Environment,
+    lights: Vec<Light>,
 }
 
 /// The `Environment` surrounding the objects in a `Scene`. All the rays that
@@ -50,10 +57,15 @@ pub enum Environment {
 impl<O: Object> Scene<O> {
     /// Create a new `Scene` with the given objects inside the given
     /// `Environment`.
-    pub fn new(objects: impl IntoIterator<Item = O>, environment: Environment) -> Self {
+    pub fn new(
+        objects: impl IntoIterator<Item = O>,
+        lights: Vec<Light>,
+        environment: Environment,
+    ) -> Self {
         Scene {
             objects: objects.into_iter().collect(),
             environment,
+            lights,
         }
     }
 
@@ -149,9 +161,16 @@ pub fn render_pixel(
         / f64::from(config.samples);
 
     // gamma correct pixels
-    c.x = c.x.sqrt();
-    c.y = c.y.sqrt();
-    c.z = c.z.sqrt();
+    // c.x = c.x.sqrt();
+    // c.y = c.y.sqrt();
+    // c.z = c.z.sqrt();
+
+    let m = c.x.max(c.y).max(c.z);
+    c.x /= m;
+    c.y /= m;
+    c.z /= m;
+
+    dbg!((x, y));
 
     Rgb {
         data: [
@@ -169,46 +188,56 @@ fn sample(
     rng: &mut impl Rng,
     config: &RenderConfig,
 ) -> Vec3 {
-    let mut sample_material = |material: &Material, intersection, n| match *material {
-        Material::Lambertian { albedo } => {
-            albedo
-                * sample(
-                    scene,
-                    &lambertian_bounce(intersection, n, rng),
-                    depth + 1,
-                    rng,
-                    config,
-                )
-        }
-        Material::Metal { albedo, fuzziness } => {
-            let r = metal_bounce(ray, intersection, n, fuzziness, rng);
-
-            if r.dir.dot(&n) < 0.0 {
-                return Vec3::zero();
-            }
-
-            albedo * sample(scene, &r, depth + 1, rng, config)
-        }
-        Material::Dielectric { refraction_index } => sample(
-            scene,
-            &dielectric_bounce(ray, intersection, n, refraction_index, rng),
-            depth + 1,
-            rng,
-            config,
-        ),
-        Material::Light { emittance } => emittance,
-    };
-
     match scene.intersection(ray) {
+        None => sample_environment(scene, ray),
+
         Some(_) if depth >= config.max_bounces => Vec3::zero(),
         Some((s, t)) => {
+            let material = s.material();
+
             let intersection = ray.point_at(t);
             let n = s.normal_at(intersection);
 
-            sample_material(&s.material(), intersection, n)
-        }
+            let mut diffuse_light_intensity = 0.0;
+            let mut specular_light_intensity = 0.0;
 
-        None => sample_environment(scene, ray),
+            for light in &scene.lights {
+                let mut light_dir = light.position - intersection;
+                let light_dist2 = light_dir.norm2();
+                light_dir.normalize();
+
+                let light_ray = Ray::new(intersection, light_dir);
+
+                // check if point is on the shadow
+                if let Some((_, t)) = scene.intersection(&light_ray) {
+                    if light_ray.point_at(t).dist2(&light_ray.origin) < light_dist2 {
+                        continue;
+                    }
+                }
+
+                diffuse_light_intensity += light_dir.dot(&n).max(0.0) * light.intensity;
+                specular_light_intensity += (-Ray::new(-light_dir, n).reflect())
+                    .dot(&ray.dir)
+                    .max(0.0)
+                    .powf(material.specular_exponent)
+                    * light.intensity;
+            }
+
+            let reflect_ray = Ray::new(intersection, Ray::new(ray.dir.normalized(), n).reflect());
+            let reflected_color = sample(scene, &reflect_ray, depth + 1, rng, config);
+
+            let mut c = material.diffuse_color * diffuse_light_intensity * material.albedo[0];
+            c += Vec3::new(1.0, 1.0, 1.0) * specular_light_intensity * material.albedo[1];
+            c += reflected_color * material.albedo[2];
+
+            if let Some(d) = Ray::new(ray.dir.normalized(), n).refract(material.refraction_index) {
+                let refract_ray = Ray::new(intersection, d);
+                let refracted_color = sample(scene, &refract_ray, depth + 1, rng, config);
+
+                c += refracted_color * material.albedo[3];
+            }
+            c
+        }
     }
 }
 

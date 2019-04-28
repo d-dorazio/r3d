@@ -70,7 +70,7 @@ pub fn main() {
 
     let img = parallel_render(
         &camera,
-        &Scene::new(scene, SKY_ENVIRONMENT),
+        &Scene::new(scene, vec![], SKY_ENVIRONMENT),
         &RenderConfig {
             width: 1200,
             height: 800,

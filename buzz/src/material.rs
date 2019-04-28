@@ -7,11 +7,11 @@ use geo::Vec3;
 /// interacts(reflects, refracts, etc..) with them. They're mainly composed of
 /// an `albedo` field which is the intrinsic color of the material.
 #[derive(Debug, PartialEq, Clone)]
-pub enum Material {
-    Lambertian { albedo: Vec3 },
-    Metal { albedo: Vec3, fuzziness: f64 },
-    Dielectric { refraction_index: f64 },
-    Light { emittance: Vec3 },
+pub struct Material {
+    pub albedo: [f64; 4],
+    pub diffuse_color: Vec3,
+    pub specular_exponent: f64,
+    pub refraction_index: f64,
 }
 
 impl Material {
@@ -19,8 +19,13 @@ impl Material {
     /// is modeled after the [Lambertian reflectance model][0].
     ///
     /// [0]: https://en.wikipedia.org/wiki/Lambertian_reflectance
-    pub const fn lambertian(albedo: Vec3) -> Self {
-        Material::Lambertian { albedo }
+    pub const fn lambertian(diffuse_color: Vec3) -> Self {
+        Material {
+            diffuse_color,
+            specular_exponent: 0.0,
+            refraction_index: 0.0,
+            albedo: [0.0; 4],
+        }
     }
 
     /// A metallic material that reflects light as it comes in. The `fuzziness`
@@ -28,22 +33,32 @@ impl Material {
     /// `fuzziness` makes it reflect more accurately because the reflected rays
     /// will change less. On the other hand, an high value will make it a bit
     /// opaque while still reflecting its surroundings.
-    pub const fn metal(albedo: Vec3, fuzziness: f64) -> Self {
-        Material::Metal { albedo, fuzziness }
+    pub const fn metal(diffuse_color: Vec3, _fuzziness: f64) -> Self {
+        Material {
+            diffuse_color,
+            specular_exponent: 0.0,
+            refraction_index: 0.0,
+            albedo: [0.0; 4],
+        }
     }
 
     /// Clear materials like glass and diamond are of type Dielectric and are
     /// identified by a refracion index. For example, glass has a refraction
     /// index in [1.3, 1.7] while diamond is 2.4.
     pub const fn dielectric(refraction_index: f64) -> Self {
-        Material::Dielectric { refraction_index }
+        Material {
+            diffuse_color: Vec3::zero(),
+            refraction_index,
+            specular_exponent: 0.0,
+            albedo: [0.0; 4],
+        }
     }
 
-    /// A light material is a material that does not reflect rays, but always
-    /// emits the given light.
-    pub const fn light(emittance: Vec3) -> Self {
-        Material::Light { emittance }
-    }
+    // A light material is a material that does not reflect rays, but always
+    // emits the given light.
+    // pub const fn light(emittance: Vec3) -> Self {
+    //     Material::Light { emittance }
+    // }
 }
 
 pub fn lambertian_bounce(intersection: Vec3, n: Vec3, rng: &mut impl Rng) -> Ray {
