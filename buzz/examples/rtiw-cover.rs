@@ -5,7 +5,7 @@ use geo::Vec3;
 use buzz::camera::Camera;
 use buzz::material::Material;
 use buzz::sphere::Sphere;
-use buzz::{parallel_render, Environment, RenderConfig, Scene};
+use buzz::{parallel_render, Environment, Light, RenderConfig, Scene};
 
 const SKY_ENVIRONMENT: Environment =
     Environment::LinearGradient(Vec3::new(1.0, 1.0, 1.0), Vec3::new(0.5, 0.7, 1.0));
@@ -70,12 +70,19 @@ pub fn main() {
 
     let img = parallel_render(
         &camera,
-        &Scene::new(scene, vec![], SKY_ENVIRONMENT),
+        &Scene::new(
+            scene,
+            vec![Light {
+                intensity: 0.8,
+                position: Vec3::new(13.0, 7.0, 20.0),
+            }],
+            SKY_ENVIRONMENT,
+        ),
         &RenderConfig {
             width: 1200,
             height: 800,
-            max_bounces: 50,
-            samples: 50,
+            max_bounces: 5,
+            samples: 4,
         },
     );
     img.save("ray-tracing-in-a-weekend-cover.png").unwrap();

@@ -3,12 +3,12 @@ use geo::Vec3;
 use buzz::camera::Camera;
 use buzz::material::Material;
 use buzz::sphere::Sphere;
-use buzz::{render, Environment, RenderConfig, Scene};
+use buzz::{render, Environment, Light, RenderConfig, Scene};
 
 pub fn main() {
     let target = Vec3::new(0.0, 0.0, -1.0);
     let camera = Camera::look_at(Vec3::zero(), target, Vec3::new(0.0, 1.0, 0.0), 90.0)
-        .with_focus(target, 0.25);
+        .with_focus(target, 0.1);
 
     let scene = Scene::new(
         vec![
@@ -29,8 +29,11 @@ pub fn main() {
             ),
             Sphere::new(Vec3::new(-1.0, 0.0, -1.0), 0.5, Material::dielectric(1.5)),
         ],
-        vec![],
-        Environment::Color(Vec3::new(0.2, 0.2, 0.8)),
+        vec![Light {
+            intensity: 1.0,
+            position: Vec3::new(0.0, 1.0, 1.0),
+        }],
+        Environment::Color(Vec3::new(0.0, 0.0, 0.0)),
     );
 
     let mut rng = rand::thread_rng();
@@ -42,7 +45,7 @@ pub fn main() {
         &RenderConfig {
             width: 400,
             height: 200,
-            samples: 1,
+            samples: 10,
             max_bounces: 5,
         },
     );

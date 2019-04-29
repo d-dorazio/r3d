@@ -3,11 +3,11 @@ use geo::Vec3;
 use buzz::camera::Camera;
 use buzz::material::Material;
 use buzz::sphere::Sphere;
-use buzz::{render, Environment, RenderConfig, Scene};
+use buzz::{render, Environment, Light, RenderConfig, Scene};
 
 fn main() {
     let target = Vec3::new(0.0, 0.0, -1.0);
-    let camera = Camera::look_at(Vec3::zero(), target, Vec3::new(0.0, 1.0, 0.0), 60.0);
+    let camera = Camera::look_at(Vec3::zero(), target, Vec3::new(0.0, 1.0, 0.0), 90.0);
 
     let scene = Scene::new(
         vec![
@@ -17,17 +17,22 @@ fn main() {
                 Material::lambertian(Vec3::new(0.8, 0.3, 0.3)),
             ),
             Sphere::new(
-                Vec3::new(1.5, 0.0, -1.0),
-                0.5,
-                Material::light(Vec3::new(7.0, 7.0, 7.0)),
-            ),
-            Sphere::new(
-                Vec3::new(-0.5, 1.0, 1.0),
-                0.3,
-                Material::light(Vec3::new(0.5, 0.5, 0.5)),
+                Vec3::new(0.0, 0.0, 100.0),
+                200.0,
+                Material::lambertian(Vec3::new(0.8, 0.1, 0.1)),
             ),
         ],
-        Environment::Color(Vec3::zero()),
+        vec![
+            Light {
+                intensity: 0.5,
+                position: Vec3::new(3.0, 0.0, 0.0),
+            },
+            Light {
+                intensity: 0.1,
+                position: Vec3::new(-3.0, 0.0, 3.0),
+            },
+        ],
+        Environment::Color(Vec3::new(0.1, 0.1, 0.1)),
     );
 
     let mut rng = rand::thread_rng();
@@ -39,8 +44,8 @@ fn main() {
         &RenderConfig {
             width: 400,
             height: 200,
-            samples: 100,
-            max_bounces: 50,
+            samples: 5,
+            max_bounces: 5,
         },
     );
     img.save("lights.png").unwrap();

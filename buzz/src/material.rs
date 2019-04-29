@@ -24,21 +24,21 @@ impl Material {
             diffuse_color,
             specular_exponent: 0.0,
             refraction_index: 0.0,
-            albedo: [0.0; 4],
+            albedo: [1.0, 0.0, 0.0, 0.0],
         }
     }
 
     /// A metallic material that reflects light as it comes in. The `fuzziness`
-    /// attribute is how much to perturbate each reflected ray. A low value of
+    /// attribute is how much to perturb each reflected ray. A low value of
     /// `fuzziness` makes it reflect more accurately because the reflected rays
     /// will change less. On the other hand, an high value will make it a bit
     /// opaque while still reflecting its surroundings.
     pub const fn metal(diffuse_color: Vec3, _fuzziness: f64) -> Self {
         Material {
             diffuse_color,
-            specular_exponent: 0.0,
+            specular_exponent: 100.0,
             refraction_index: 0.0,
-            albedo: [0.0; 4],
+            albedo: [0.0, 10.0, 1.0, 0.0],
         }
     }
 
@@ -47,10 +47,10 @@ impl Material {
     /// index in [1.3, 1.7] while diamond is 2.4.
     pub const fn dielectric(refraction_index: f64) -> Self {
         Material {
-            diffuse_color: Vec3::zero(),
+            diffuse_color: Vec3::new(0.6, 0.7, 0.8),
             refraction_index,
-            specular_exponent: 0.0,
-            albedo: [0.0; 4],
+            specular_exponent: 125.0,
+            albedo: [0.0, 0.5, 0.3, 0.8],
         }
     }
 

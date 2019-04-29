@@ -47,19 +47,19 @@ impl<'a> Object for Facet<'a> {
     }
 
     fn normal_at(&self, pt: Vec3) -> Vec3 {
-        // triangle::normal(&self.positions[0], &self.positions[1], &self.positions[2])
+        self.normal
 
-        let bary = triangle::barycentric(
-            (&self.positions[0], &self.positions[1], &self.positions[2]),
-            &pt,
-        )
-        .expect("point outside triangle");
+        // let bary = triangle::barycentric(
+        //     (&self.positions[0], &self.positions[1], &self.positions[2]),
+        //     &pt,
+        // )
+        // .expect("point outside triangle");
 
-        let mut n = self.positions[0] * bary.x;
-        n += self.positions[1] * bary.y;
-        n += self.positions[2] * bary.z;
-        n.normalize();
+        // let mut n = self.positions[0] * bary.x;
+        // n += self.positions[1] * bary.y;
+        // n += self.positions[2] * bary.z;
+        // n.normalize();
 
-        n
+        // n
     }
 }

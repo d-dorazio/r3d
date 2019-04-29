@@ -161,16 +161,11 @@ pub fn render_pixel(
         / f64::from(config.samples);
 
     // gamma correct pixels
-    // c.x = c.x.sqrt();
-    // c.y = c.y.sqrt();
-    // c.z = c.z.sqrt();
+    c.x = c.x.sqrt();
+    c.y = c.y.sqrt();
+    c.z = c.z.sqrt();
 
-    let m = c.x.max(c.y).max(c.z);
-    c.x /= m;
-    c.y /= m;
-    c.z /= m;
-
-    dbg!((x, y));
+    // dbg!((x,y));
 
     Rgb {
         data: [
